@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <title>Face Recognition Based Attendance Management System</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge"> 
+  <link rel="stylesheet" href="style1.css">
+
+  <link href="https://fonts.googleapis.com/css?family=Baloo+Bhai|Bree+Serif&display=swap" rel="stylesheet">
+
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+    /*contact section*/
+    #contact{
+        position: relative;
+    
+    }
+    #contact::before{
+        content: "";
+        position: absolute;
+       
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.5;
+        width: 100%;
+        height: 50%;
+    }
+    #contact-box{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-bottom: 34px;
+        background: url("{{url_for('static',filename='bg-test11.jpg')}}") no-repeat center center/cover;
+    }
+
+    #contact-box input,
+    #contact-box textarea{
+        width: 100%;
+        padding: 0.5rem; 
+        border-radius: 9px;
+        font-size: 1.1rem;
+    }
+    #contact-box form{
+        width: 40%;
+    
+    }
+    #contact-box label{
+    font-size: 1.6rem;
+    font-family: 'Bree Serif',serif;
+    }
+    button{
+        border-radius: 5px;
+        border-color: black;
+        font-size: 1.3rem;
+        color: white;
+        font-family: 'Bree Serif',serif;
+        background-color: #0c5460 ;
+    
+    }
+    footer{
+        background: black;
+        color: white;
+        padding: 9px 20px;
+    }
+    
+    
+    
+    /* utility classes*/
+    
+    
+    .h-primary{
+        font-size: 3.5rem;
+        padding: 12px;
+        font-family: 'Bree Serif',serif;
+    
+    }
+    
+    .h-secondary{
+        font-size: 2.3rem;
+        padding: 12px;
+         font-family: 'Bree Serif',serif;
+    
+    }
+
+    .btn{
+        padding: 6px 20px;
+        border: 2px solid white;
+        background-color: #0c5460;
+        color: white;
+        margin: 17px;
+        font-size: 1.5rem;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    .center{
+        text-align:center ;
+    }
+	*{
+    margin :0;
+    padding: 0;;
+}
+html{
+    scroll-behavior: smooth;
+}
+
+
+/*css variables*/
+:root{
+    --navbar-height: 59px;
+
+}
+
+/* Navigation Bar*/
+#navbar {
+    display:flex ;
+    align-items: center;
+    position: sticky;
+    top: 0px;
+}
+
+#navbar::before{
+    content: "";
+    background-color: black;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    z-index: -1;  
+    opacity: 1.0;
+}
+/* Navigation Bar: Logo and Image*/
+
+
+#logo{
+    margin: 10px 34px;
+
+}
+#logo img{
+    height:59px;
+    margin: 3px 5px;
+
+}
+/*Navigation bar : list styling*/
+
+#navbar ul{
+    display: flex;
+    font-family: 'Baloo Bhai',cursive;
+}
+
+#navbar ul li{
+    list-style: none;
+    font-size: 1.3rem;
+}
+
+#navbar ul li a{
+    color:white;
+   display: block;
+   padding: 3px 24px;
+   border-radius: 20px;
+   text-decoration: none;
+}
+#navbar ul li a:hover{
+    color:black;
+    background-color:white;
+    
+}
+/*Home Section*/
+
+#home{
+    display:flex;
+    flex-direction : column;
+    padding: 3px 200px;
+    height: 550px;
+    justify-content : center;
+    align-items : center;
+}
+
+#webcam-container {
+    margin: 20px 0;
+    text-align: center;
+}
+#webcam {
+    width: 400px;
+    height: 300px;
+    background-color: #666;
+    margin: 0 auto;
+}
+#capture-btn {
+    margin: 10px 0;
+    padding: 10px 20px;
+    background-color: #0c5460;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Bree Serif',serif;
+}
+#capture-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+#preview {
+    display: none;
+    margin: 10px auto;
+    max-width: 400px;
+}
+#preview img {
+    max-width: 100%;
+    border: 2px solid #0c5460;
+    border-radius: 4px;
+}
+    </style>
+</head>
+</head>
+<body>
+<nav id="navbar">
+    <div id="logo">
+        <img src="{{url_for('static',filename='images/key-person2.png')}}" class="rounded-circle" alt="Icon">
+    </div>
+<ul>
+    <li class="item"><a href="/">Home</a></li>
+    <!--<li class="item"><a href="/contact">Contact Us </a></li> -->
+	    <li class="item" ><a href="/how">Admin Login</a></li>
+  
+
+</ul>
+</nav>
+ <div id="contact-box">
+    <form id="registration-form">
+    <div class="form-group">
+    <br><br><br><br> 
+                <label for="name"> Name:</label>
+                <input type="text" name="name1" id="name" placeholder="Enter Your Name" required>
+                 <label for="regid"> Registration Id:</label>
+                <input type="text" name="name2" id="regid" placeholder="Enter Your Registration Number" required>
+            </div>
+            
+            <div id="webcam-container">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                <div id="preview"></div>
+                <button type="button" id="capture-btn">Capture Photo</button>
+            </div>
+            
+            <input type="hidden" name="image_data" id="image-data">
+            <div id="status-message" style="margin: 10px 0; padding: 10px; display: none;"></div>
+            <button type="submit" id="submit-btn" disabled>Register</button>
+    </form>
+</div>
+<footer>
+<div class="center">
+    copyright &copy; Amlan Mohanty 2022. All rights reserved!
+</div>
+</footer>
+
+<script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const preview = document.getElementById('preview');
+    const imageData = document.getElementById('image-data');
+    const submitBtn = document.getElementById('submit-btn');
+    const statusMessage = document.getElementById('status-message');
+    const form = document.getElementById('registration-form');
+    let stream = null;
+
+    // Start webcam
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: 640,
+                    height: 480,
+                    facingMode: 'user'
+                } 
+            });
+            video.srcObject = stream;
+            captureBtn.disabled = false;
+        } catch (err) {
+            console.error('Error accessing webcam:', err);
+            showStatus('Error accessing webcam. Please make sure your webcam is connected and you have granted permission to use it.', 'error');
+        }
+    }
+
+    // Show status message
+    function showStatus(message, type = 'info') {
+        statusMessage.textContent = message;
+        statusMessage.style.display = 'block';
+        statusMessage.className = type;
+    }
+
+    // Capture photo
+    captureBtn.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        // Show preview
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/jpeg');
+        preview.innerHTML = '';
+        preview.appendChild(img);
+        preview.style.display = 'block';
+        
+        // Enable submit button
+        submitBtn.disabled = false;
+        
+        // Store image data
+        imageData.value = canvas.toDataURL('image/jpeg');
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!imageData.value) {
+            showStatus('Please capture a photo first', 'error');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        showStatus('Registering...', 'info');
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch('/name', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                showStatus(result.message, 'success');
+                // Reset form after successful registration
+                form.reset();
+                preview.style.display = 'none';
+                imageData.value = '';
+                submitBtn.disabled = true;
+            } else {
+                showStatus(result.error || 'Registration failed', 'error');
+                submitBtn.disabled = false;
+            }
+        } catch (err) {
+            console.error('Error submitting form:', err);
+            showStatus('Error submitting form. Please try again.', 'error');
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Start webcam when page loads
+    startWebcam();
+
+    // Clean up when leaving page
+    window.addEventListener('beforeunload', () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+</script>
+</body>
+</html>
