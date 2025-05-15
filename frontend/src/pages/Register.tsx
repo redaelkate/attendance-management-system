@@ -13,6 +13,7 @@ const Register = () => {
   const [statusType, setStatusType] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(true);
   const navigate = useNavigate();
 
   const capture = () => {
@@ -31,6 +32,12 @@ const Register = () => {
       setStatus("Webcam is not available. Please check your camera permissions.");
       setStatusType("error");
     }
+  };
+
+  const handleCameraError = () => {
+    setCameraLoading(false);
+    setStatus("Webcam is not available. Please check your camera permissions.");
+    setStatusType("error");
   };
 
   const handleSubmit = async (e) => {
@@ -147,6 +154,11 @@ const Register = () => {
             <div className="webcam-container">
               <label className="form-label">Capture Photo</label>
               <div className="webcam-wrapper">
+                {cameraLoading && (
+                  <div className="loading-spinner flex justify-center items-center h-60">
+                    <span className="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-gray-500"></span>
+                  </div>
+                )}
                 <Webcam
                   audio={false}
                   ref={webcamRef}
@@ -156,8 +168,10 @@ const Register = () => {
                   videoConstraints={{
                     facingMode: "user",
                     width: 320,
-                    height: 240
+                    height: 240,
                   }}
+                  onUserMedia={() => setCameraLoading(false)}
+                  onUserMediaError={handleCameraError}
                 />
               </div>
               

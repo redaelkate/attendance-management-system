@@ -10,7 +10,7 @@ const Layout = ({ children }) => {
           <div className="header-content">
             <Link to="/" className="logo">
               <FaUserCheck className="logo-icon" />
-              <h1>FRAMS</h1>
+              <h1>Check-in System</h1>
             </Link>
           </div>
         </div>

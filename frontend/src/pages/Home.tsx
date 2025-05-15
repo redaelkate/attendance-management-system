@@ -7,7 +7,7 @@ const Home = () => {
     <>
       <div className="card">
         <div className="card-header">
-          <h2>Welcome to FRAMS</h2>
+          <h2>Welcome to Check-in System</h2>
         </div>
         <p className="text-lg mb-6">Face Recognition-based Attendance Management System</p>
         

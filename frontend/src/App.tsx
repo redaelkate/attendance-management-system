@@ -10,6 +10,7 @@ import SuccessPage from "./pages/SuccessPage.tsx";
 import ImageCaptured from "./pages/ImageCaptured.tsx";
 import Layout from "./components/Layout";
 import "./global.css";
+import PowerBIDashboard from "./pages/PowerBI.tsx";
 
 export default function App() {
   return (
@@ -23,6 +24,8 @@ export default function App() {
         <Route path="/login" element={<Layout><AdminLogin /></Layout>} />
         <Route path="/success" element={<Layout><SuccessPage /></Layout>} />
         <Route path="/captured" element={<Layout><ImageCaptured /></Layout>} />
+        <Route path="/powerbi" element={<Layout><PowerBIDashboard /></Layout>} />
+        {/* Add more routes as needed */}
       </Routes>
     </Router>
   );
