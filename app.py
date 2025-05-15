@@ -328,17 +328,38 @@ def data():
 
 
             
-@app.route('/whole',methods=["GET","POST"])
+@app.route('/whole', methods=["GET", "POST"])
 def whole():
-    today=date.today()
-    print(today)
-    conn = sqlite3.connect('information.db')
-    conn.row_factory = sqlite3.Row 
-    cur = conn.cursor() 
-    print ("Opened database successfully");
-    cursor = cur.execute("SELECT DISTINCT NAME,Time, Date from Attendance")
-    rows=cur.fetchall()    
-    return render_template('form3.html',rows=rows)
+    try:
+        # Check if the attendance.csv file exists
+        if not os.path.exists('attendance.csv'):
+            print("Attendance file not found")
+            return jsonify({"success": False, "data": [], "message": "Attendance file not found"}), 404
+
+        # Load attendance data from CSV into a DataFrame
+        df = pd.read_csv('attendance.csv', header=None, names=['NAME', 'Time', 'Date', 'Mode'])
+        print("Attendance data loaded successfully")
+
+        # Filter today's attendance
+        todays_attendance = df[df['Date'] == date.today().strftime('%Y-%m-%d')].copy()  # Use .copy() to avoid SettingWithCopyWarning
+
+        if todays_attendance.empty:
+            print("No attendance data for today")
+            return jsonify({"success": True, "data": [], "message": "No attendance data for today"}), 200
+
+        # Ensure 'Time' column contains only valid time values and convert to string
+        todays_attendance['Time'] = pd.to_datetime(todays_attendance['Time'], format='%H:%M:%S', errors='coerce').dt.strftime('%H:%M:%S')
+
+        # Drop rows with invalid 'Time' values
+        todays_attendance = todays_attendance.dropna(subset=['Time'])
+
+        # Convert DataFrame to a list of dictionaries for JSON response
+        rows = todays_attendance.to_dict(orient='records')
+
+        return jsonify({"success": True, "data": rows, "message": "Attendance data retrieved successfully"}), 200
+    except Exception as e:
+        print(f"Error loading attendance data: {str(e)}")
+        return jsonify({"success": False, "data": [], "message": f"Error loading attendance data: {str(e)}"}), 500
 
 @app.route('/dashboard',methods=["GET","POST"])
 def dashboard():
@@ -395,89 +416,89 @@ def markAttendance(name, mode='entry', today=None):
             nameList = []
             for line in myDataList:
                 entry = line.split(',')
-                if len(entry) >= 3:  # Check if line has enough fields
-                    nameList.append((entry[0], entry[1], entry[2].strip()))  # name, time, mode
+                if len(entry) >= 4:  # Check if line has enough fields
+                    nameList.append((entry[0], entry[1], entry[2].strip(), entry[3].strip()))  # name, time, date, mode
             
             # Check if person already marked attendance for this mode today
-            for entry_name, entry_time, entry_mode in nameList:
-                if entry_name == name and entry_mode == mode:
+            for entry_name, entry_time, entry_date, entry_mode in nameList:
+                if entry_name == name and entry_date == today and entry_mode == mode:
                     print(f"Already marked {mode} for {name} today")
                     return False
             
             # Mark new attendance
-            now = datetime.now()
-            dtString = now.strftime('%H:%M')
-            f.writelines(f'\n{name},{dtString},{mode}')
-            print(f"Marked {mode} attendance for {name} at {dtString}")
+            now = datetime.datetime.now()
+            dtString = now.strftime('%H:%M:%S')  # Ensure only time is stored
+            f.writelines(f'\n{name},{dtString},{today},{mode}')
+            print(f"Marked {mode} attendance for {name} at {dtString} on {today}")
             return True
     except Exception as e:
         print(f"Error marking attendance in CSV: {str(e)}")
     return False
 
-def init_db():
-    """Initialize the database with proper table structure"""
-    try:
-        conn = sqlite3.connect('information.db')
-        # Drop existing table if it exists
-        conn.execute('DROP TABLE IF EXISTS Attendance')
-        # Create new table with proper structure
-        conn.execute('''CREATE TABLE Attendance
-                        (NAME TEXT NOT NULL,
-                         Time TEXT NOT NULL,
-                         Date TEXT NOT NULL,
-                         Mode TEXT NOT NULL)''')
-        conn.commit()
-        conn.close()
-        print("Database initialized successfully")
-        return True
-    except Exception as e:
-        print(f"Error initializing database: {str(e)}")
-        return False
-
 def markData(name, mode='entry'):
+    """Mark attendance in the CSV file only."""
     try:
         print(f"Marking {mode} attendance for {name}")
-        now = datetime.now()
-        dtString = now.strftime('%H:%M')
-        today = date.today()
-        d1 = today.strftime('%b-%d-%Y')
-        print(f"Today's date: {today}")
+        now = datetime.datetime.now()
+        dtString = now.strftime('%H:%M:%S')  # Ensure only time is stored
+        today = date.today().strftime('%Y-%m-%d')
         
-        conn = sqlite3.connect('information.db')
-        
-        # Check if table exists and has correct structure
-        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Attendance'")
-        if not cursor.fetchone():
-            # Table doesn't exist, create it
-            conn.execute('''CREATE TABLE Attendance
-                            (NAME TEXT NOT NULL,
-                             Time TEXT NOT NULL,
-                             Date TEXT NOT NULL,
-                             Mode TEXT NOT NULL)''')
-            conn.commit()
-        
-        # Check if person already marked attendance for this mode today
-        cursor = conn.execute("SELECT NAME, Time, Date, Mode FROM Attendance WHERE NAME = ? AND Date = ? AND Mode = ?",
-                            (name, d1, mode))
-        if cursor.fetchone():
-            print(f"Already marked {mode} for {name} today")
-            conn.close()
-            return False
-        
-        # Mark new attendance
-        conn.execute("INSERT INTO Attendance (NAME, Time, Date, Mode) VALUES (?, ?, ?, ?)",
-                    (name, dtString, d1, mode))
-        conn.commit()
-        
-        cursor = conn.execute("SELECT NAME, Time, Date, Mode FROM Attendance WHERE NAME = ? AND Date = ? AND Mode = ?",
-                            (name, d1, mode))
-        for line in cursor:
-            print(f"Attendance recorded - Name: {line[0]}, Time: {line[1]}, Date: {line[2]}, Mode: {line[3]}")
-        
-        conn.close()
-        return True
+        # Open the CSV file and check for existing entries
+        with open('attendance.csv', 'r+', errors='ignore') as f:
+            myDataList = f.readlines()
+            nameList = []
+            for line in myDataList:
+                entry = line.split(',')
+                if len(entry) >= 4:  # Check if line has enough fields
+                    nameList.append((entry[0], entry[1], entry[2].strip(), entry[3].strip()))  # name, time, date, mode
+            
+            # Check if person already marked attendance for this mode today
+            for entry_name, entry_time, entry_date, entry_mode in nameList:
+                if entry_name == name and entry_date == today and entry_mode == mode:
+                    print(f"Already marked {mode} for {name} today")
+                    return False
+            
+            # Mark new attendance
+            f.writelines(f'\n{name},{dtString},{today},{mode}')
+            print(f"Marked {mode} attendance for {name} at {dtString} on {today}")
+            return True
     except Exception as e:
-        print(f"Error marking attendance in database: {str(e)}")
+        print(f"Error marking attendance in CSV: {str(e)}")
+        return False
+
+def init_db():
+    """Remove database initialization as we are using CSV files."""
+    pass
+
+def markData(name, mode='entry'):
+    """Mark attendance in the CSV file only."""
+    try:
+        print(f"Marking {mode} attendance for {name}")
+        now = datetime.datetime.now()
+        dtString = now.strftime('%H:%M:%S')  # Ensure only time is stored
+        today = date.today().strftime('%Y-%m-%d')
+        
+        # Open the CSV file and check for existing entries
+        with open('attendance.csv', 'r+', errors='ignore') as f:
+            myDataList = f.readlines()
+            nameList = []
+            for line in myDataList:
+                entry = line.split(',')
+                if len(entry) >= 4:  # Check if line has enough fields
+                    nameList.append((entry[0], entry[1], entry[2].strip(), entry[3].strip()))  # name, time, date, mode
+            
+            # Check if person already marked attendance for this mode today
+            for entry_name, entry_time, entry_date, entry_mode in nameList:
+                if entry_name == name and entry_date == today and entry_mode == mode:
+                    print(f"Already marked {mode} for {name} today")
+                    return False
+            
+            # Mark new attendance
+            f.writelines(f'\n{name},{dtString},{today},{mode}')
+            print(f"Marked {mode} attendance for {name} at {dtString} on {today}")
+            return True
+    except Exception as e:
+        print(f"Error marking attendance in CSV: {str(e)}")
         return False
 
 def save_face_encodings():
@@ -681,7 +702,7 @@ def mark_attendance():
 
         # Mark attendance
         csv_success = markAttendance(name, mode, today)
-        db_success = markData(name, mode, today)
+        db_success = markData(name, mode)
         
         if csv_success and db_success:
             return jsonify({
