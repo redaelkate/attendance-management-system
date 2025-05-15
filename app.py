@@ -1,4 +1,4 @@
-from flask import Flask,render_template,request, jsonify
+from flask import Flask,render_template,request, jsonify, session
 import cv2
 import numpy as np
 import face_recognition
@@ -11,10 +11,15 @@ import time
 import json
 import requests
 import base64
+from flask_cors import CORS
 import pickle
+import datetime
+import pandas as pd
 
 name="amlan"
 app = Flask(__name__)
+CORS(app) 
+app.secret_key = 'abc123'  # Set a secret key for session management
 
 def start_ngrok():
     try:
@@ -264,7 +269,15 @@ def login():
     username = json_data['username']
     password = json_data['password']
     #print(username,password)
+    if os.path.exists('cred.csv') == False:
+        data = {'username': ['admin'], 'password': ['admin']}
+        df = pd.DataFrame(data)
+        df.to_csv('cred.csv', index=False)
+    else:
+        df = pd.read_csv('cred.csv')
+    #print(df.head())
     df= pd.read_csv('cred.csv')
+    print(df.head())
     if len(df.loc[df['username'] == username]['password'].values) > 0:
         if df.loc[df['username'] == username]['password'].values[0] == password:
             session['username'] = username
@@ -374,7 +387,7 @@ def sendMail():
     server.sendmail(mssg["From"],mssg["To"],mssg.as_string())
    # server.quit()
 
-def markAttendance(name, mode='entry'):
+def markAttendance(name, mode='entry', today=None):
     try:
         today = date.today().strftime('%Y-%m-%d')
         with open('attendance.csv', 'r+', errors='ignore') as f:
@@ -660,13 +673,15 @@ def mark_attendance():
 
         name = data['name']
         mode = data['mode']
+        day=datetime.datetime.now().date()
+        today = day.strftime('%Y-%m-%d')
 
         if mode not in ['entry', 'exit']:
             return jsonify({"success": False, "error": "Invalid mode"}), 400
 
         # Mark attendance
-        csv_success = markAttendance(name, mode)
-        db_success = markData(name, mode)
+        csv_success = markAttendance(name, mode, today)
+        db_success = markData(name, mode, today)
         
         if csv_success and db_success:
             return jsonify({
