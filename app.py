@@ -48,10 +48,7 @@ def start_ngrok():
         print(f"Error starting ngrok: {str(e)}")
         return None
 
-@app.route('/new', methods=['GET', 'POST'])
-def new():
-    # Always render the registration form (index.html)
-    return render_template('index.html')
+
 
 @app.route('/name', methods=['GET', 'POST'])
 def name():
@@ -164,11 +161,14 @@ def name():
                 "error": f"An unexpected error occurred: {str(e)}"
             }), 500
     else:
-        return render_template('index.html')
+        return  jsonify({
+            "success": False, 
+            "error": "Invalid request method. Please use POST to register."
+        }), 405
+    
 
-@app.route('/image')
-def image():
-    return render_template('image.html')
+
+
 
 @app.route("/",methods=["GET","POST"])
 def recognize():
@@ -254,13 +254,16 @@ def recognize():
 
             cap.release()
             cv2.destroyAllWindows()
-            return render_template('first.html')
+            return "Face recognition completed", 200
             
         except Exception as e:
             print(f"Error in face recognition: {str(e)}")
             return f"Error in face recognition: {str(e)}", 500
     else:
-        return render_template('main.html')
+        return jsonify({
+            "success": False, 
+            "error": "Invalid request method. Please use POST to recognize."
+        }), 405
 
 @app.route('/login',methods = ['POST'])
 def login():
@@ -299,7 +302,10 @@ def checklogin():
 
 @app.route('/how',methods=["GET","POST"])
 def how():
-    return render_template('form.html')
+    return jsonify({
+        "success": True,
+        "message": "This is the how endpoint."
+    }), 200
 @app.route('/data',methods=["GET","POST"])
 def data():
     '''user=request.form['username']
@@ -322,9 +328,16 @@ def data():
         print ("Operation done successfully");
         conn.close()
 
-        return render_template('form2.html',rows=rows)
+        return jsonify({
+            "success": True,
+            "data": data1,
+            "message": "Data retrieved successfully"
+        }), 200
     else:
-        return render_template('form1.html')
+        return jsonify({
+            "success": False,
+            "error": "Invalid request method. Please use POST to retrieve data."
+        }), 405
 
 
             
@@ -363,7 +376,10 @@ def whole():
 
 @app.route('/dashboard',methods=["GET","POST"])
 def dashboard():
-    return render_template('dashboard.html')
+    return jsonify({
+        "success": True,
+        "message": "This is the dashboard endpoint."
+    }), 200
 
 # Sending Email about the attendance report to the faculties/ parents / etc.
 # Not working currently
@@ -718,6 +734,47 @@ def mark_attendance():
     except Exception as e:
         print(f"Error marking attendance: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/new_table', methods=["GET", "POST"])
+def new_table():
+    try:
+        # Check if the new table CSV file exists
+        if not os.path.exists('new_attendance.csv'):
+            print("New attendance file not found, creating a new one.")
+            # Create an empty DataFrame with the new structure
+            new_df = pd.DataFrame(columns=['Date', 'EmployeeName', 'Status', 'EntryHour', 'LeaveHour'])
+            new_df.to_csv('new_attendance.csv', index=False)
+
+        # Load the new attendance data
+        new_df = pd.read_csv('new_attendance.csv')
+        print("New attendance data loaded successfully")
+
+        # If POST request, add a new record
+        if request.method == "POST":
+            data = request.get_json()
+            if not data or not all(key in data for key in ['Date', 'EmployeeName', 'Status', 'EntryHour', 'LeaveHour']):
+                return jsonify({"success": False, "error": "Missing required data"}), 400
+
+            # Append the new record to the DataFrame
+            new_record = {
+                'Date': data['Date'],
+                'EmployeeName': data['EmployeeName'],
+                'Status': data['Status'],
+                'EntryHour': data['EntryHour'],
+                'LeaveHour': data['LeaveHour']
+            }
+            new_df = new_df.append(new_record, ignore_index=True)
+            new_df.to_csv('new_attendance.csv', index=False)
+            print("New record added successfully")
+            return jsonify({"success": True, "message": "Record added successfully"}), 200
+
+        # Return the new table data
+        rows = new_df.to_dict(orient='records')
+        return jsonify({"success": True, "data": rows, "message": "New attendance data retrieved successfully"}), 200
+
+    except Exception as e:
+        print(f"Error handling new table: {str(e)}")
+        return jsonify({"success": False, "error": f"Error handling new table: {str(e)}"}), 500
 
 if __name__ == '__main__':
     try:
