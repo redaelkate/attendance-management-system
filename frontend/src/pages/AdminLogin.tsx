@@ -32,7 +32,7 @@ const AdminLogin = () => {
         setStatus("Login successful! Redirecting to dashboard...");
         setStatusType("success");
         setTimeout(() => {
-          navigate("/today"); // Redirect to today's attendance
+          navigate("/powerbi"); // Redirect to today's attendance
         }, 1000);
       } else {
         setStatus("Login failed. Incorrect credentials.");
