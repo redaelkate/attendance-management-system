@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaUserPlus, FaFingerprint, FaUserShield } from "react-icons/fa";
+import { FaUserPlus, FaFingerprint, FaUserShield,FaCamera } from "react-icons/fa";
 
 const Home = () => {
   return (
@@ -25,9 +25,9 @@ const Home = () => {
           
           <div className="card">
             <div className="text-center mb-4">
-              <FaFingerprint className="text-5xl mx-auto text-primary mb-3" />
-              <h3 className="font-medium text-xl">Attendance</h3>
-              <p className="text-gray-500">Mark your daily attendance</p>
+              <FaCamera className="text-5xl mx-auto text-primary mb-3" />
+              <h3 className="font-medium text-xl">Face Recognition</h3>
+              <p className="text-gray-500">Use face recognition to mark attendance</p>
             </div>
             <Link to="/confirm" className="btn btn-primary w-full">
               Punch Attendance
